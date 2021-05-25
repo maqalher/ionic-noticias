@@ -3,7 +3,7 @@ import { Article } from 'src/app/interfaces/interfaces';
 
 import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
 import { SocialSharing } from '@ionic-native/social-sharing/ngx';
-import { ActionSheetController } from '@ionic/angular';
+import { ActionSheetController, Platform } from '@ionic/angular';
 import { DataLocalService } from 'src/app/services/data-local.service';
 
 @Component({
@@ -21,7 +21,8 @@ export class NoticiaComponent implements OnInit {
     private iab: InAppBrowser,
     private actionSheetCtrl: ActionSheetController,
     private socialSharing: SocialSharing,
-    private dataLocalService: DataLocalService
+    private dataLocalService: DataLocalService,
+    private platform: Platform
   ) { }
 
   ngOnInit() {}
@@ -66,12 +67,9 @@ export class NoticiaComponent implements OnInit {
           cssClass: 'action-dark',
           handler: () => {
             console.log('Share clicked');
-            this.socialSharing.share(
-              this.noticia.title,  // mensaje
-              this.noticia.source.name, // subject
-              '', // file - tmabian puede ser null
-              this.noticia.url // url
-            );
+
+            this.compartirNoticia();
+
           }
         },
         guardarBorrarBtn
@@ -88,6 +86,35 @@ export class NoticiaComponent implements OnInit {
       ]
     });
     await actionSheet.present();
+  }
+
+  compartirNoticia(){
+
+    if(this.platform.is('cordova') || this.platform.is('capacitor')){
+
+      this.socialSharing.share(
+        this.noticia.title,  // mensaje
+        this.noticia.source.name, // subject
+        '', // file - tmabian puede ser null
+        this.noticia.url // url
+      );
+    } else {
+
+      if (navigator.share) {
+        navigator.share({
+          title: this.noticia.title,
+          text: this.noticia.description,
+          url: this.noticia.url,
+        })
+          .then(() => console.log('Successful share'))
+          .catch((error) => console.log('Error sharing', error));
+      } else {
+        console.log('no se pudo compartir porque el navegador no lo soporta')
+      }
+
+    }
+
+
   }
 
 }
